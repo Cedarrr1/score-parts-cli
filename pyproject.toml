@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "score-parts-cli"
+version = "0.1.0"
+description = "Export individual PDF parts from a MusicXML score"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "verovio>=4.0,<7",
+    "CairoSVG>=2.7,<3",
+    "pypdf>=5,<7",
+]
+
+[project.scripts]
+score-parts = "score_parts.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
