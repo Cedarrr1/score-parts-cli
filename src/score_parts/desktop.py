@@ -190,10 +190,16 @@ class MainWindow(QMainWindow):
         self.token_edit.setEchoMode(QLineEdit.Password)
         self.token_edit.setPlaceholderText("试用令牌（本次使用，不保存）")
         self.consent = QCheckBox("我同意上传当前选定页面用于 AI 检查")
+        privacy_note = QLabel(
+            "试用服务仅保存额度计数，不保存页面图像；图像会交由模型服务商处理。"
+            "启用前请向试用服务运营方确认模型服务商及其保存政策。"
+        )
+        privacy_note.setWordWrap(True)
         self.ai_button = QPushButton("检查此页")
         self.ai_button.clicked.connect(self._ai_review)
         ai_form.addRow("服务地址", self.endpoint_edit)
         ai_form.addRow("试用令牌", self.token_edit)
+        ai_form.addRow(privacy_note)
         ai_form.addRow(self.consent)
         ai_form.addRow(self.ai_button)
         right_layout.addWidget(ai_box)
