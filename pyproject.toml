@@ -4,18 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "score-parts-cli"
-version = "0.1.0"
-description = "Export individual PDF parts from a MusicXML score"
+version = "0.2.0"
+description = "Batch MusicXML part delivery and AI-assisted review"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "verovio>=4.0,<7",
-    "CairoSVG>=2.7,<3",
+    "svglib>=2.3,<3",
+    "reportlab>=4,<6",
     "pypdf>=5,<7",
+    "pypdfium2>=4.25,<6",
 ]
+
+[project.optional-dependencies]
+desktop = ["PySide6-Essentials>=6.7,<7"]
+service = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "openai>=1.75,<3"]
+build = ["PyInstaller>=6.0,<7"]
 
 [project.scripts]
 score-parts = "score_parts.cli:main"
+score-parts-batch = "score_parts.batch_cli:main"
+score-parts-desktop = "score_parts.desktop:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -1,67 +1,74 @@
-# score-parts-cli
+# AI 谱务助手 / Score Parts Assistant
 
-Export one A4 PDF per instrument from a partwise MusicXML score (`.mxl`, `.musicxml`, or `.xml`). The tool extracts each instrument, lays it out afresh with [Verovio](https://www.verovio.org/), and adds a title and page numbers. It does not transcribe MIDI or recognize notes in a PDF.
+A Windows-first desktop workflow for orchestra librarians: import partwise MusicXML scores, generate individual A4 PDF parts, review local quality findings, and prepare a delivery bundle. The conversion engine also remains available as a command-line tool.
 
-将 partwise 格式的 MusicXML 乐谱（.mxl、.musicxml 或 .xml）按乐器拆分为单独的 A4 PDF：每个乐器导出为一个 PDF，使用 Verovio 重新排版，并自动添加标题与页码。本工具不转写 MIDI，也不识别 PDF 中的音符。
+**Supported input:** `.mxl`, `.musicxml`, `.xml` partwise MusicXML. MIDI transcription and PDF score recognition are outside this release.
 
-## Install（安装）
+输入须为 partwise 格式的 MusicXML。MXL 优先读取 `META-INF/container.xml` 指定的总谱；每个 `score-part` 生成一份分谱。原总谱的分页与换行会在分谱中重新排版，音符、休止符、力度和奏法等记谱内容保留在所选声部中。排练或出版前请人工核对分谱，尤其是翻页位置。安装与命令说明见下文。
 
-Requires Python 3.10 or newer. In a virtual environment:
+## Install and start
 
-需要 Python 3.10 或更高版本。在虚拟环境中执行：
+Python 3.10 or newer is required. For a source checkout:
 
-```sh
-python -m pip install "git+https://github.com/Cedarrr1/score-parts-cli.git"
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[desktop]"
+.\.venv\Scripts\score-parts-desktop.exe
 ```
 
-For a local checkout, use `python -m pip install .` from this directory.
+The desktop app supports file and folder drop, part selection, an A4 engraving scale, filename templates (`{title}`, `{part}`, `{id}`), saved presets, page preview, review findings, and confirmed delivery packaging. Each run creates a new `batch-...` directory, so older results are not silently overwritten.
 
-本地克隆后，可在项目目录中运行 python -m pip install .。
+The batch directory contains one folder per score, individual part PDFs, `manifest.json`, and `report.html`. After a human confirms review, the app creates `delivery.zip`. Unresolved findings remain visible in the report and bundle.
 
+## Command-line tools
 
-On Windows, CairoSVG may also require a working Cairo native library. If installation succeeds but PDF generation reports that Cairo cannot be loaded, install a Cairo runtime and make its DLL directory available on `PATH`.
+The original command is unchanged:
 
-Windows 上 CairoSVG 可能还需要 Cairo 原生库。若安装成功但生成 PDF 时提示无法加载 Cairo，请安装 Cairo 运行时并将其 DLL 目录加入 PATH。
-
-## Use（使用）
-
-```sh
-score-parts "quartet.mxl" -o "parts"
-score-parts "quartet.musicxml" --list-parts
-score-parts "quartet.mxl" --part "Violin I" --part "Viola" -o "parts"
-score-parts "quartet.mxl" --title "Danse Macabre" --scale 70 --overwrite
+```powershell
+score-parts "quartet.mxl" -o parts
+score-parts "quartet.mxl" --list-parts
+score-parts "quartet.mxl" --part "Violin I" --scale 70 --overwrite
 ```
 
-The command writes separate PDFs such as `Danse Macabre - Violin I.pdf`. It refuses to replace existing PDFs unless `--overwrite` is given. Use `score-parts --help` for all options.
+The new batch command accepts multiple files or directories and writes a report:
 
-命令会生成类似 Danse Macabre - Violin I.pdf 的独立 PDF。除非指定 --overwrite，否则不会覆盖已有 PDF。使用 score-parts --help 查看全部选项。
-
-
-## Input and output（输入与输出）
-
-- Input must be **partwise MusicXML**. An MXL archive is read through its `META-INF/container.xml` entry when present.
-- 输入须为 partwise 格式的 MusicXML。若为 MXL 压缩包，会优先读取其中的 META-INF/container.xml。
-
-
-- Each `score-part` becomes a PDF. `--part` accepts a part name or ID and may be repeated.
-- 每个 score-part 生成一个 PDF。--part 可接受声部名称或 ID，且可重复指定。
-
-- The title comes from the MusicXML work title, movement title, or first credit. Use `--title` to override it.
-- 标题取自 MusicXML 的 work title、movement title 或首个 credit；可用 --title 覆盖。
-  
-- Original full-score page and system breaks are removed so each part can be laid out on A4 pages. Original notes, rests, dynamics, articulations, and other MusicXML notation stay in the selected part.
-- 原始总谱的分页与换行会被移除，以便每个声部在 A4 页面上重新排版。所选声部中的音符、休止符、力度、奏法及其他 MusicXML 记谱信息均会保留。
-
-- Page layout is automatic. Review the PDFs before rehearsal or publication, especially page turns and imported notation.
-- 页面布局为自动生成。排练或出版前请先检查 PDF，尤其注意翻页与导入的记谱。
-
-## Development（开发）
-
-```sh
-python -m pip install -e .
-python -m unittest discover -s tests
+```powershell
+score-parts-batch "scores" "extra-score.mxl" -o "deliveries" --filename-pattern "{title} - {part}"
 ```
 
-This repository contains the conversion tool only. It does not include source scores, generated PDFs, or bundled dependencies.
+Errors are recorded per score; one bad file does not stop the remaining batch. The original score files are not copied into the delivery folder.
 
-本仓库仅包含转换工具，不包含源乐谱、生成的 PDF 或捆绑的依赖。
+## Quality checks and review limits
+
+Local checks confirm selected part and measure counts, exact preservation of each source measure's content during extraction, PDF readability and page count, A4 size, visible blank pages, title and part label, edge ink, sparse last pages, and potentially awkward page turns. These checks do **not** establish that the original score is musically correct or that every page turn is playable. Final review is required.
+
+An optional online AI review considers **only a page the user selects and explicitly approves**. The client sends a rendered PNG plus title, part name, and page number; it does not send the MXL file or full PDF. Suggestions are marked as AI findings and cannot edit the score. The trial server stores quota counts but no page images. The model provider processes uploaded pages under its own terms; operators must disclose the provider and retention policy before issuing trial access.
+
+To use online review, enter the HTTPS trial service URL and an issued token in the desktop app. The app does not save the token. Offline generation and quality checks work without an account, token, or network access.
+
+## Trial service (operator setup)
+
+The service is optional and is intended to be deployed behind HTTPS. Install `.[service]` and set these environment variables on the **server only**:
+
+| Variable | Purpose |
+| --- | --- |
+| `OPENAI_API_KEY` | Model provider credential; never put it in the desktop app. |
+| `OPENAI_MODEL` | A vision-capable Responses API model chosen by the operator. |
+| `SCORE_PARTS_TRIAL_TOKENS` | Comma-separated invite tokens. Use long, random values. |
+| `SCORE_PARTS_TRIAL_LIMIT` | Maximum pages per token; default 30. |
+| `SCORE_PARTS_USAGE_DB` | Persistent SQLite quota database path. |
+
+Start with `uvicorn score_parts.ai_service:app --host 127.0.0.1 --port 8000` for local testing. In public deployment, place it behind HTTPS, protect environment secrets, persist the quota database, disable request-body logging, and provision unique tokens for invited users. No public service URL or trial tokens are included in this repository.
+
+## Windows package
+
+Run `powershell -ExecutionPolicy Bypass -File .\build_windows.ps1` on Windows. It builds a portable `dist/ScorePartsAssistant-Windows.zip` and runs a packaged self-test. A fresh Windows machine still needs a separate installation and sample-score check before a public beta. The ZIP is a portable distribution, not a signed installer.
+
+## Development
+
+```powershell
+python -m pip install -e ".[desktop,service,build]"
+python -m unittest discover -s tests -v
+```
+
+See [release checks](RELEASE_CHECKLIST.md) for the remaining trial launch gates and third-party license notes. Source scores and generated parts are intentionally excluded from the repository.
